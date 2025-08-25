@@ -61,5 +61,28 @@ describe Officing::VotersController do
       expect(voter2.booth_assignment).to eq(assignment2)
       expect(voter2.officer_assignment).to eq(assignment2.officer_assignments.first)
     end
+
+    it "does not overwrite non key attributes when a web voter already exists" do
+      officer = create(:poll_officer)
+      user = create(:user, :level_two, document_number: "11223344Z")
+      poll = create(:poll, officers: [officer])
+      booth = create(:poll_booth)
+      create(:poll_booth_assignment, poll: poll, booth: booth)
+      create(:poll_shift, officer: officer, booth: booth, date: Date.current, task: :vote_collection)
+      existing = create(:poll_voter, poll: poll, user: user, origin: "web")
+
+      validate_officer
+      set_officing_booth(booth)
+      sign_in(officer.user)
+
+      expect {
+        post :create, params: { voter: { poll_id: poll.id, user_id: user.id }, format: :js }
+        expect(response).to be_successful
+      }.not_to change(Poll::Voter, :count)
+
+      existing.reload
+      expect(existing.origin).to eq("web")
+      expect(existing.document_number).to eq("11223344Z")
+    end
   end
 end
