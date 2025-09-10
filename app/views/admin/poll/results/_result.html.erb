@@ -10,10 +10,10 @@
     </thead>
     <tbody>
       <% question.question_options.each_with_index do |option, i| %>
-        <% by_answer = by_question[question.id].present? ? by_question[question.id].group_by(&:answer) : {} %>
+        <% by_option = by_question[question.id].present? ? by_question[question.id].group_by(&:option_id) : {} %>
         <tr id="question_<%= question.id %>_<%= i %>_result">
           <td><%= option.title %></td>
-          <td class="text-center"><%= by_answer[option.title].present? ? by_answer[option.title].sum(&:amount) : 0 %></td>
+          <td class="text-center"><%= by_option[option.id].present? ? by_option[option.id].sum(&:amount) : 0 %></td>
         </tr>
       <% end %>
     </tbody>
