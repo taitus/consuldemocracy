@@ -1,4 +1,4 @@
- <%= back_link_to new_officing_poll_result_path(@poll) %>
+<%= back_link_to new_officing_poll_result_path(@poll) %>
 <h2><%= @poll.name %> - <%= t("officing.results.index.results") %></h2>
 
 <% if @partial_results.present? %>
@@ -29,25 +29,7 @@
 
       <% by_question = @partial_results.group_by(&:question_id) %>
       <% @poll.questions.each do |question| %>
-        <h3><%= question.title %></h3>
-
-        <table>
-          <thead>
-            <tr>
-              <th><%= t("officing.results.index.table_answer") %></th>
-              <th><%= t("officing.results.index.table_votes") %></th>
-            </tr>
-          </thead>
-          <tbody>
-            <% question.question_options.each_with_index do |option, i| %>
-              <% by_option = by_question[question.id].present? ? by_question[question.id].group_by(&:option_id) : {} %>
-              <tr id="question_<%= question.id %>_<%= i %>_result">
-                <td><%= option.title %></td>
-                <td><%= by_option[option.id].present? ? by_option[option.id].sum(&:amount) : 0 %></td>
-              </tr>
-            <% end %>
-          </tbody>
-        </table>
+        WIP
       <% end %>
     </div>
   </div>
