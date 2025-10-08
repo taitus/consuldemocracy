@@ -1,0 +1,214 @@
+diff --git a/app/components/admin/settings/features_tab_component.rb b/app/components/admin/settings/features_tab_component.rb
+index 67d54d337c..9b06e32a38 100644
+--- a/app/components/admin/settings/features_tab_component.rb
++++ b/app/components/admin/settings/features_tab_component.rb
+@@ -26,6 +26,7 @@ class Admin::Settings::FeaturesTabComponent < ApplicationComponent
+       feature.sdg
+       feature.machine_learning
+       feature.remove_investments_supports
++      feature.gdpr.require_consent_for_notifications
+       feature.dashboard.notification_emails
+     ]
+   end
+diff --git a/app/models/setting.rb b/app/models/setting.rb
+index d9b6f2fb18..7b997e563c 100644
+--- a/app/models/setting.rb
++++ b/app/models/setting.rb
+@@ -91,6 +91,7 @@ class Setting < ApplicationRecord
+         "feature.machine_learning": false,
+         "feature.remove_investments_supports": true,
+         "feature.cookies_consent": false,
++        "feature.gdpr.require_consent_for_notifications": false,
+         "homepage.widgets.feeds.debates": true,
+         "homepage.widgets.feeds.processes": true,
+         "homepage.widgets.feeds.proposals": true,
+diff --git a/app/models/user.rb b/app/models/user.rb
+index 30cee72c1e..7af90cdbe8 100644
+--- a/app/models/user.rb
++++ b/app/models/user.rb
+@@ -1,6 +1,10 @@
+ class User < ApplicationRecord
+   include Verification
+   attribute :registering_from_web, default: false
++  %i[newsletter email_digest email_on_direct_message public_activity recommended_debates
++     recommended_proposals].each do |field|
++    attribute field, :boolean, default: -> { !Setting["feature.gdpr.require_consent_for_notifications"] }
++  end
+ 
+   devise :database_authenticatable, :registerable, :confirmable, :recoverable, :rememberable,
+          :trackable, :validatable, :omniauthable, :password_expirable, :secure_validatable,
+diff --git a/config/locales/en/settings.yml b/config/locales/en/settings.yml
+index 50ace1eb0d..fc4e95012c 100644
+--- a/config/locales/en/settings.yml
++++ b/config/locales/en/settings.yml
+@@ -140,6 +140,9 @@ en:
+       sdg_description: Enable Sustainable Development Goals sections in the administration menu and in the Global Settings.
+       cookies_consent: Cookies consent banner
+       cookies_consent_description: Enable the cookies consent banner to inform users about the cookies the application uses.
++      gdpr:
++        require_consent_for_notifications: Explicit consent for notifications
++        require_consent_for_notifications_description: Require explicit user consent in order to send them newsletters and similar information as required by the General Data Protection Regulation (GDPR).
+     remote_census:
+       general:
+         endpoint: "Endpoint"
+diff --git a/config/locales/es/settings.yml b/config/locales/es/settings.yml
+index 02bb55f5c5..77c1acf87e 100644
+--- a/config/locales/es/settings.yml
++++ b/config/locales/es/settings.yml
+@@ -140,6 +140,9 @@ es:
+       sdg_description: Habilitar secciones relacionadas con Objetivos de Desarrollo Sostenible en el menú de administración y en la sección de Configuración Global.
+       cookies_consent: Banner de consentimiento de cookies
+       cookies_consent_description: Activa el banner de consentimiento de cookies para informar a los usuarios sobre las cookies que utiliza la aplicación.
++      gdpr:
++        require_consent_for_notifications: Consentimiento explícito para notificaciones
++        require_consent_for_notifications_description: Requerir que los usuarios tengan que dar consentimiento explícito para enviarles boletines e información similar tal y como describe Reglamento General de Protección de Datos (RGPD).
+     remote_census:
+       general:
+         endpoint: "Endpoint"
+diff --git a/spec/models/user_spec.rb b/spec/models/user_spec.rb
+index c8d6777c33..eecb15007d 100644
+--- a/spec/models/user_spec.rb
++++ b/spec/models/user_spec.rb
+@@ -92,37 +92,103 @@ describe User do
+   end
+ 
+   describe "preferences" do
+-    describe "email_on_comment" do
++    describe "#email_on_comment" do
+       it "is false by default" do
+         expect(subject.email_on_comment).to be false
+       end
+     end
+ 
+-    describe "email_on_comment_reply" do
++    describe "#email_on_comment_reply" do
+       it "is false by default" do
+         expect(subject.email_on_comment_reply).to be false
+       end
+     end
+ 
+-    describe "subscription_to_website_newsletter" do
+-      it "is true by default" do
+-        expect(subject.newsletter).to be true
++    describe "#newsletter" do
++      it "is true by default when the consent for notifications setting is disabled" do
++        Setting["feature.gdpr.require_consent_for_notifications"] = false
++
++        expect(build(:user).newsletter).to be true
++      end
++
++      it "is true by default when the consent for notifications setting is enabled" do
++        Setting["feature.gdpr.require_consent_for_notifications"] = true
++
++        expect(build(:user).newsletter).to be false
+       end
+     end
+ 
+-    describe "email_digest" do
+-      it "is true by default" do
+-        expect(subject.email_digest).to be true
++    describe "#email_digest" do
++      it "is true by default when the consent for notifications setting is disabled" do
++        Setting["feature.gdpr.require_consent_for_notifications"] = false
++
++        expect(build(:user).email_digest).to be true
++      end
++
++      it "is true by default when the consent for notifications setting is enabled" do
++        Setting["feature.gdpr.require_consent_for_notifications"] = true
++
++        expect(build(:user).email_digest).to be false
+       end
+     end
+ 
+-    describe "email_on_direct_message" do
+-      it "is true by default" do
+-        expect(subject.email_on_direct_message).to be true
++    describe "#email_on_direct_message" do
++      it "is true by default when the consent for notifications setting is disabled" do
++        Setting["feature.gdpr.require_consent_for_notifications"] = false
++
++        expect(build(:user).email_on_direct_message).to be true
++      end
++
++      it "is true by default when the consent for notifications setting is enabled" do
++        Setting["feature.gdpr.require_consent_for_notifications"] = true
++
++        expect(build(:user).email_on_direct_message).to be false
++      end
++    end
++
++    describe "#public_activity" do
++      it "is true by default when the consent for notifications setting is disabled" do
++        Setting["feature.gdpr.require_consent_for_notifications"] = false
++
++        expect(build(:user).public_activity).to be true
++      end
++
++      it "is true by default when the consent for notifications setting is enabled" do
++        Setting["feature.gdpr.require_consent_for_notifications"] = true
++
++        expect(build(:user).public_activity).to be false
+       end
+     end
+ 
+-    describe "official_position_badge" do
++    describe "#recommended_debates" do
++      it "is true by default when the consent for notifications setting is disabled" do
++        Setting["feature.gdpr.require_consent_for_notifications"] = false
++
++        expect(build(:user).recommended_debates).to be true
++      end
++
++      it "is true by default when the consent for notifications setting is enabled" do
++        Setting["feature.gdpr.require_consent_for_notifications"] = true
++
++        expect(build(:user).recommended_debates).to be false
++      end
++    end
++
++    describe "#recommended_proposals" do
++      it "is true by default when the consent for notifications setting is disabled" do
++        Setting["feature.gdpr.require_consent_for_notifications"] = false
++
++        expect(build(:user).recommended_proposals).to be true
++      end
++
++      it "is true by default when the consent for notifications setting is enabled" do
++        Setting["feature.gdpr.require_consent_for_notifications"] = true
++
++        expect(build(:user).recommended_proposals).to be false
++      end
++    end
++
++    describe "#official_position_badge" do
+       it "is false by default" do
+         expect(subject.official_position_badge).to be false
+       end
+@@ -402,6 +468,26 @@ describe User do
+       end
+     end
+ 
++    describe ".newsletter" do
++      it "returns users subscribed to the newsletter" do
++        create(:user, newsletter: true, username: "Subscriber1")
++        create(:user, newsletter: true, username: "Subscriber2")
++        create(:user, newsletter: false, username: "NonSubscriber")
++
++        expect(User.newsletter.pluck(:username)).to eq ["Subscriber1", "Subscriber2"]
++      end
++    end
++
++    describe ".email_digest" do
++      it "returns users subscribed to email digests" do
++        create(:user, email_digest: true, username: "Digester1")
++        create(:user, email_digest: true, username: "Digester2")
++        create(:user, email_digest: false, username: "NonDigester")
++
++        expect(User.email_digest.pluck(:username)).to eq ["Digester1", "Digester2"]
++      end
++    end
++
+     describe ".by_username_email_or_document_number" do
+       let!(:larry) do
+         create(:user, email: "larry@consul.dev", username: "Larry Bird", document_number: "12345678Z")
