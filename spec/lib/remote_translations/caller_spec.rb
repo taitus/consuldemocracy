@@ -230,15 +230,14 @@ describe RemoteTranslations::Caller, :remote_translations do
   describe ".configured?" do
     it "is true if llm? is true regardless of microsoft key" do
       allow(RemoteTranslations::Caller).to receive(:llm?).and_return(true)
-      allow(Tenant).to receive_message_chain(:current_secrets, :microsoft_api_key).and_return(nil)
+      stub_secrets(microsoft_api_key: nil)
 
       expect(RemoteTranslations::Caller.configured?).to be true
     end
 
     it "falls back to microsoft settings when llm? is false" do
       allow(RemoteTranslations::Caller).to receive(:llm?).and_return(false)
-      Setting["feature.remote_translations"] = true
-      allow(Tenant).to receive_message_chain(:current_secrets, :microsoft_api_key).and_return("key")
+      stub_secrets(microsoft_api_key: "key")
 
       expect(RemoteTranslations::Caller.configured?).to be true
     end

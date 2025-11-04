@@ -6,7 +6,7 @@ describe Layout::RemoteTranslationsButtonComponent do
 
   before do
     allow(RemoteTranslations::Caller).to receive(:available_locales)
-      .and_return(%w[de en es fr pt zh-Hans zh-CN pt-BR])
+      .and_return(%w[de en es fr zh-CN pt-BR])
   end
 
   context "locale with English as a fallback" do

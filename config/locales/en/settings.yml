@@ -243,7 +243,7 @@ en:
     llm:
       title: LLM Settings
       provider: "LLM Provider"
-      default_help_text: "Providers will be <strong>disabled</strong> until credentials are configured in the secrets.yml."
+      provider_description: "Providers will be disabled until credentials are configured in the secrets.yml."
       provider_blank_option: "None"
       model_blank_option: "None"
       use_llm_for_translations: "Content Translation"

@@ -168,7 +168,7 @@ To enable the translation service in your application you must complete the foll
 
 #### Add api key in the application's credentials
 
-Once your LLM API credentials are available, you have to configure the service correctly in your application by using the section `apis:` and subsection `llm:` of the `secrets.yml` file, with the key `{provider}_api_key` as follows:
+Once your LLM API credentials are available, you have to configure your application secrets by using the section `apis:` and subsection `llm:` of the `secrets.yml` file, with the key `{provider}_api_key` as follows:
 
 * Add a `llm:` subsection into the `apis:` subsection:
 
@@ -182,9 +182,11 @@ apis: &apis
 
 #### Configuring LLM provider, model
 
-Boot up your application, then navigate to Admin > Global Settings and choose LLM Settings tab. LLM provider, model can be selected here, depending on which configuration requirements you met inside `secrets.yml` file. If you configured a provider, but it's still greyed out, it means that it's not satifying [RubyLLM's requirement for your provider](https://rubyllm.com/configuration#global-configuration-rubyllmconfigure).
+Boot up your application, then navigate to Admin > Global Settings and choose LLM Settings tab. Your provider and the model to use for translations can be selected here.
 
 <img width="1288" height="928" alt="Consul LLM Settings" src="../../img/translations/remote_translations/display-llm-translations.png" />
+
+If you have configured LLM credentials in `secrets.yml` file, but that provider is still disabled on the dropdown list, you are missing some [required fields for your provider](https://rubyllm.com/configuration#global-configuration-rubyllmconfigure).
 
 #### Configuring LLM prompt
 
@@ -192,4 +194,4 @@ Use `config/llm_prompts.yml` and edit `remote_translation_prompt` to set up your
 
 #### Enabling the feature
 
-Once we have configured everything in LLM Settings tab, we can proceed to enable the feature. To enable it, in the administration area access the section **Settings > Global settings > Features** and enable the **Remote translation** feature. From this point onwards, your users will receive a bar
+Once we have configured everything in LLM Settings tab, we can proceed to enable the feature. To enable it, in the administration area access the section **Settings > Global settings > Features** and enable the **Remote translation** feature.
