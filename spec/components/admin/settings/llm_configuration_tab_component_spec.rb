@@ -2,291 +2,106 @@ require "rails_helper"
 
 describe Admin::Settings::LlmConfigurationTabComponent do
   let(:component) { Admin::Settings::LlmConfigurationTabComponent.new }
+  let(:providers_config) do
+    {
+      OpenAI: { enabled: true },
+      Anthropic: { enabled: false },
+      Gemini: { enabled: true }
+    }
+  end
+  let(:models_for_openai) do
+    [
+      instance_double(RubyLLM::Model::Info, name: "GPT-4o", id: "gpt-4o"),
+      instance_double(RubyLLM::Model::Info, name: "GPT-4o-mini", id: "gpt-4o-mini")
+    ]
+  end
+  let(:provider_setting) { Setting.find_by!(key: "llm.provider") }
+  let(:model_setting) { Setting.find_by!(key: "llm.model") }
+  let(:feature_setting) { Setting.find_by!(key: "llm.use_llm_for_translations") }
+  let(:provider_select_selector) { "#value_setting_#{provider_setting.id}" }
+  let(:model_select_selector) { "#value_setting_#{model_setting.id}" }
+  let(:feature_button_selector) { "button[aria-labelledby='title_setting_#{feature_setting.id}']" }
 
-  describe "#tab" do
-    it "returns the correct tab identifier" do
-      expect(component.tab).to eq("#tab-llm-configuration")
+  before do
+    Setting["llm.provider"] = nil
+    Setting["llm.model"] = nil
+    Setting["llm.use_llm_for_translations"] = false
+    allow(RemoteTranslations::Llm::Config).to receive(:providers).and_return(providers_config)
+    allow(RubyLLM.models).to receive(:by_provider).with(:openai).and_return(models_for_openai)
+  end
+
+  context "when no provider is configured" do
+    it "renders the default state with disabled model select and feature toggle" do
+      render_inline component
+
+      expect(page).to have_content "LLM Settings"
+
+      page.find(provider_select_selector) do
+        expect(page).to have_content "LLM Provider"
+        expect(page).to have_content "Providers will be disabled until credentials are configured " \
+                                     "in the secrets.yml."
+        expect(page).to have_selector(:option, "OpenAI", selected: false)
+        expect(page).to have_selector(:option, "Gemini", selected: false)
+        expect(page).to have_selector(:option, "Anthropic", disabled: true, selected: false)
+      end
+
+      page.find(model_select_selector) do
+        expect(page).to have_content "Model"
+        expect(page).to have_content "The LLM model to use."
+        expect(page).to have_css "fieldset[disabled]"
+      end
+
+      page.find(feature_button_selector) do
+        expect(page).to have_content "Content Translation"
+        expect(page).to have_content "Use LLM for content translations and take precedence over " \
+                                     "Microsoft translation services."
+        expect(page).to have_button "No", disabled: true
+      end
     end
   end
 
-  describe "#providers" do
-    it "returns providers from RemoteTranslations::Llm::Config" do
-      providers_hash = { a: :stub }
-      expect(RemoteTranslations::Llm::Config).to receive(:providers).and_return(providers_hash)
+  context "when a provider is configured but no model" do
+    before { Setting["llm.provider"] = "OpenAI" }
 
-      expect(component.providers).to eq(providers_hash)
+    it "enables the model dropdown while keeping the feature toggle disabled" do
+      render_inline component
+
+      page.find(provider_select_selector) do
+        expect(page).to have_selector(:option, "OpenAI", selected: true)
+      end
+
+      page.find(model_select_selector) do
+        expect(page).to have_selector(:option, "GPT-4o", selected: false)
+        expect(page).to have_selector(:option, "GPT-4o-mini", selected: false)
+        expect(page).not_to have_css "fieldset[disabled]"
+      end
+
+      page.find(feature_button_selector) do
+        expect(page).to have_button "No", disabled: true
+      end
     end
   end
 
-  describe "#provider_options" do
-    let(:providers) do
-      {
-        OpenAI: { enabled: true },
-        Anthropic: { enabled: false },
-        Gemini: { enabled: true }
-      }
-    end
-
+  context "when both provider and model are configured" do
     before do
-      allow(RemoteTranslations::Llm::Config).to receive(:providers).and_return(providers)
+      Setting["llm.provider"] = "OpenAI"
+      Setting["llm.model"] = "gpt-4o"
     end
 
-    context "when no provider is selected" do
-      before { Setting["llm.provider"] = nil }
+    it "enables the feature toggle once provider and model are selected" do
+      render_inline component
 
-      it "generates options for all providers" do
-        options = component.provider_options
-        expect(options).to include("OpenAI")
-        expect(options).to include("Anthropic")
-        expect(options).to include("Gemini")
+      page.find(provider_select_selector) do
+        expect(page).to have_selector(:option, "OpenAI", selected: true)
       end
 
-      it "disables providers that are not enabled" do
-        options = component.provider_options
-        # Check that disabled providers are marked as disabled in the options
-        expect(options).to match(/Anthropic/)
-      end
-    end
-
-    context "when a provider is selected" do
-      before { Setting["llm.provider"] = "OpenAI" }
-
-      it "selects the current provider" do
-        options = component.provider_options
-        expect(options).to include("OpenAI")
-        # The options_for_select should include the selected value
-        expect(options).to match(/OpenAI/)
-      end
-    end
-  end
-
-  describe "#models" do
-    context "when provider is blank" do
-      before { Setting["llm.provider"] = nil }
-
-      it "returns an empty hash" do
-        expect(component.models).to eq({})
-      end
-    end
-
-    context "when provider is set" do
-      before { Setting["llm.provider"] = "OpenAI" }
-
-      it "returns models from RubyLLM for the provider" do
-        model1 = double("Model", name: "GPT-4o", id: "gpt-4o")
-        model2 = double("Model", name: "GPT-4o-mini", id: "gpt-4o-mini")
-        models_collection = [model1, model2]
-
-        allow(RubyLLM.models).to receive(:by_provider).with(:openai).and_return(models_collection)
-
-        result = component.models
-
-        expect(result).to eq({
-          "GPT-4o" => { id: "gpt-4o", enabled: true },
-          "GPT-4o-mini" => { id: "gpt-4o-mini", enabled: true }
-        })
-      end
-    end
-  end
-
-  describe "#model_options" do
-    context "when no models are available" do
-      before do
-        Setting["llm.provider"] = "OpenAI"
-        allow(RubyLLM.models).to receive(:by_provider).and_return([])
+      page.find(model_select_selector) do
+        expect(page).to have_selector(:option, "GPT-4o", selected: true)
+        expect(page).not_to have_css "fieldset[disabled]"
       end
 
-      it "returns empty options string" do
-        options = component.model_options
-        expect(options).to be_empty
-      end
-    end
-
-    context "when models are available" do
-      before do
-        Setting["llm.provider"] = "OpenAI"
-        model1 = double("Model", name: "GPT-4o", id: "gpt-4o")
-        model2 = double("Model", name: "GPT-4o-mini", id: "gpt-4o-mini")
-        allow(RubyLLM.models).to receive(:by_provider).and_return([model1, model2])
-      end
-
-      context "when no model is selected" do
-        before { Setting["llm.model"] = nil }
-
-        it "generates options for all available models" do
-          options = component.model_options
-          expect(options).to include("GPT-4o")
-          expect(options).to include("GPT-4o-mini")
-        end
-      end
-
-      context "when a model is selected" do
-        before { Setting["llm.model"] = "gpt-4o" }
-
-        it "includes the selected model in options" do
-          options = component.model_options
-          expect(options).to include("GPT-4o")
-        end
-      end
-    end
-  end
-
-  describe "#model_disabled?" do
-    context "when provider is blank" do
-      before { Setting["llm.provider"] = nil }
-
-      it "returns true" do
-        expect(component.model_disabled?).to be true
-      end
-    end
-
-    context "when provider is set" do
-      before { Setting["llm.provider"] = "OpenAI" }
-
-      it "returns false" do
-        expect(component.model_disabled?).to be false
-      end
-    end
-
-    context "when provider is an empty string" do
-      before { Setting["llm.provider"] = "" }
-
-      it "returns true" do
-        expect(component.model_disabled?).to be true
-      end
-    end
-  end
-
-  describe "#feature_disabled?" do
-    context "when provider is blank" do
-      before do
-        Setting["llm.provider"] = nil
-        Setting["llm.model"] = "gpt-4o"
-      end
-
-      it "returns true" do
-        expect(component.feature_disabled?).to be true
-      end
-    end
-
-    context "when model is blank" do
-      before do
-        Setting["llm.provider"] = "OpenAI"
-        Setting["llm.model"] = nil
-      end
-
-      it "returns true" do
-        expect(component.feature_disabled?).to be true
-      end
-    end
-
-    context "when both provider and model are blank" do
-      before do
-        Setting["llm.provider"] = nil
-        Setting["llm.model"] = nil
-      end
-
-      it "returns true" do
-        expect(component.feature_disabled?).to be true
-      end
-    end
-
-    context "when both provider and model are set" do
-      before do
-        Setting["llm.provider"] = "OpenAI"
-        Setting["llm.model"] = "gpt-4o"
-      end
-
-      it "returns false" do
-        expect(component.feature_disabled?).to be false
-      end
-    end
-
-    context "when provider is set but model is an empty string" do
-      before do
-        Setting["llm.provider"] = "OpenAI"
-        Setting["llm.model"] = ""
-      end
-
-      it "returns true" do
-        expect(component.feature_disabled?).to be true
-      end
-    end
-  end
-
-  describe "rendering disabled states based on the configuration" do
-    let(:providers) do
-      {
-        OpenAI: { enabled: true },
-        Anthropic: { enabled: false },
-        Gemini: { enabled: true }
-      }
-    end
-
-    before do
-      allow(RemoteTranslations::Llm::Config).to receive(:providers).and_return(providers)
-    end
-
-    context "when provider is not set" do
-      before do
-        Setting["llm.provider"] = nil
-        Setting["llm.model"] = nil
-      end
-
-      it "renders the component with disabled model dropdown" do
-        model1 = double("Model", name: "GPT-4o", id: "gpt-4o")
-        allow(RubyLLM.models).to receive(:by_provider).and_return([model1])
-
-        render_inline component
-
-        expect(page).to have_css("fieldset[disabled]")
-      end
-
-      it "renders the component with disabled toggle" do
-        render_inline component
-
-        expect(page).to have_button(disabled: true)
-      end
-    end
-
-    context "when provider is set but model is not" do
-      before do
-        Setting["llm.provider"] = "OpenAI"
-        Setting["llm.model"] = nil
-      end
-
-      it "renders the component with enabled model dropdown" do
-        model1 = double("Model", name: "GPT-4o", id: "gpt-4o")
-        allow(RubyLLM.models).to receive(:by_provider).with(:openai).and_return([model1])
-
-        render_inline component
-
-        expect(page).not_to have_css("fieldset[disabled]")
-      end
-
-      it "renders the component with disabled translation toggle" do
-        model1 = double("Model", name: "GPT-4o", id: "gpt-4o")
-        allow(RubyLLM.models).to receive(:by_provider).with(:openai).and_return([model1])
-
-        render_inline component
-
-        expect(page).to have_button(disabled: true)
-      end
-    end
-
-    context "when both provider and model are set" do
-      before do
-        Setting["llm.provider"] = "OpenAI"
-        Setting["llm.model"] = "gpt-4o"
-      end
-
-      it "renders the component with enabled translation toggle" do
-        model1 = double("Model", name: "GPT-4o", id: "gpt-4o")
-        allow(RubyLLM.models).to receive(:by_provider).with(:openai).and_return([model1])
-
-        render_inline component
-
-        expect(page).to have_button(disabled: false)
+      page.find(feature_button_selector) do
+        expect(page).to have_button "No", disabled: false
       end
     end
   end
