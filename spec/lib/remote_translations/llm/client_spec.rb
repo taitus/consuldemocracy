@@ -8,7 +8,7 @@ describe RemoteTranslations::Llm::Client do
 
   before do
     Setting["llm.provider"] = "OpenAI"
-    allow(RemoteTranslations::Llm::Config).to receive(:context).and_return(context)
+    allow(Llm::Config).to receive(:context).and_return(context)
   end
 
   it "calls chat.ask for each field and returns contents" do

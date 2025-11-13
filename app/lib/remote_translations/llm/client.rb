@@ -18,7 +18,7 @@ module RemoteTranslations
       private
 
         def build_context
-          Config.context
+          ::Llm::Config.context
         end
 
         def build_chat

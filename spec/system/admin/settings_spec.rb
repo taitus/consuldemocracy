@@ -374,7 +374,7 @@ describe "Admin settings", :admin do
   describe "LLM settings" do
     context "Required LLM setup is configured" do
       before do
-        allow(RemoteTranslations::Llm::Config)
+        allow(Llm::Config)
           .to receive(:providers).and_return({ OpenAI: { enabled: true }})
         ruby_llm_models = [double("Model", name: "GPT-4.1 mini", id: "gpt-4o-mini")]
         allow(RubyLLM.models).to receive(:by_provider).with(:openai).and_return(ruby_llm_models)

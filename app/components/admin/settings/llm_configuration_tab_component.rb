@@ -4,7 +4,7 @@ class Admin::Settings::LlmConfigurationTabComponent < ApplicationComponent
   end
 
   def providers
-    RemoteTranslations::Llm::Config.providers
+    Llm::Config.providers
   end
 
   def provider_options

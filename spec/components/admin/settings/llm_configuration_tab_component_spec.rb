@@ -26,7 +26,7 @@ describe Admin::Settings::LlmConfigurationTabComponent do
     Setting["llm.provider"] = nil
     Setting["llm.model"] = nil
     Setting["llm.use_llm_for_translations"] = false
-    allow(RemoteTranslations::Llm::Config).to receive(:providers).and_return(providers_config)
+    allow(Llm::Config).to receive(:providers).and_return(providers_config)
     allow(RubyLLM.models).to receive(:by_provider).with(:openai).and_return(models_for_openai)
   end
 

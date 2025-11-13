@@ -12,11 +12,11 @@ Puedes habilitar la traducción de contenido de dos maneras diferentes.
 
 #### Microsoft TranslatorText Translation
 
-- Recomendable si ya cuentas con Azure o prefieres una API de traducción dedicada.
+* Recomendable si ya cuentas con Azure o prefieres una API de traducción dedicada.
 
 #### Traducciones con LLM
 
-- Recomendable si ya dispones de un servicio LLM (IA) o si quieres tener más control sobre las traducciones, por ejemplo personalizando el prompt.
+* Recomendable si ya dispones de un servicio LLM (IA) o si quieres tener más control sobre las traducciones, por ejemplo personalizando el prompt.
 
 ### Uso de Microsoft TranslatorText Translation
 
