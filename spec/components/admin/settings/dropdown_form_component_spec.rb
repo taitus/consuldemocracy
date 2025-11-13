@@ -10,8 +10,7 @@ describe Admin::Settings::DropdownFormComponent do
 
     expect(page).to have_css "form.dropdown-settings-form"
     expect(page).to have_select id: "value_setting_#{setting.id}",
-                                options: ["None", "Option 1", "Option 2",
-                                          "Option 3"]
+                                options: ["None", "Option 1", "Option 2", "Option 3"]
     expect(page).to have_button "Update"
   end
 
@@ -66,9 +65,9 @@ describe Admin::Settings::DropdownFormComponent do
 
       render_inline component
 
-      select = page.find("select#value_setting_#{setting.id}")
-      expect(select.all("option").map(&:text)).to include("None", "Option 1", "Option 2", "Option 3")
-      expect(select.value).to eq("")
+      expect(page).to have_select id: "value_setting_#{setting.id}",
+                                  options: ["None", "Option 1", "Option 2", "Option 3"]
+      expect(page.find("#value_setting_#{setting.id}").value).to eq("")
     end
   end
 end
