@@ -243,10 +243,8 @@ es:
     llm:
       title: Configuración LLM
       provider: "Proveedor LLM"
-      default_help_text: "Los proveedores estarán <strong>deshabilitados</strong> hasta que se configuren las credenciales en secrets.yml."
-      provider_blank_option: "Seleccionar un proveedor..."
-      model_blank_option: "Seleccionar un modelo..."
+      provider_description: "Los proveedores estarán deshabilitados hasta que se configuren las credenciales en secrets.yml."
       use_llm_for_translations: "Traducción de Contenido"
-      use_llm_for_translations_description: "Usar LLM para traducciones de contenido y tomar precedencia sobre los servicios de traducción de Microsoft."
+      use_llm_for_translations_description: "Usar LLM para traducir contenido y darle prioridad sobre los servicios de traducción de Microsoft."
       model: "Modelo"
       model_description: "El modelo LLM a usar."

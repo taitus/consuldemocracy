@@ -21,8 +21,7 @@ class Admin::Settings::LlmConfigurationTabComponent < ApplicationComponent
 
     RubyLLM.models.by_provider(provider.downcase.to_sym).each_with_object({}) do |model, hash|
       hash[model.name] = {
-        id: model.id,
-        enabled: true
+        id: model.id
       }
     end
   end

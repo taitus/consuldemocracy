@@ -3,8 +3,6 @@ module RemoteTranslations
     class Client
       attr_reader :context, :chat, :prompt
 
-      class LLMTranslationError < StandardError; end
-
       def initialize
         @context = build_context
         @chat = build_chat
