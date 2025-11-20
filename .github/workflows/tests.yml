@@ -1,11 +1,5 @@
 name: tests
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches-ignore:
-      - i18n_master
+on: push
 
 permissions:
   contents: read
@@ -59,7 +53,11 @@ jobs:
       - name: Copy secrets and database files
         run: for i in config/*.example; do cp "$i" "${i/.example}"; done
       - name: Setup database
-        run: bundle exec rake db:setup
+        # env:
+        #   SKIP_TEST_DATABASE_TRUNCATE: "1"
+        run: |
+          echo "Setting up database (without SKIP_TEST_DATABASE_TRUNCATE=1)..."
+          time bundle exec rake db:setup
       - name: Compile assets
         run: bundle exec rake assets:precompile > /dev/null 2>&1
       - name: Run test suite
