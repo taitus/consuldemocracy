@@ -90,10 +90,6 @@ describe "Moderation" do
 
   describe "Moderate resources" do
     factories = [
-      :budget_investment,
-      :comment,
-      :debate,
-      :proposal,
       :proposal_notification
     ]
 
