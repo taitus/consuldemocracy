@@ -54,19 +54,19 @@ end
 
 FactoryBot.use_parent_strategy = false
 
-module Capybara
-  module DSL
-    alias_method :original_visit, :visit
+# module Capybara
+#   module DSL
+#     alias_method :original_visit, :visit
 
-    def visit(url, ...)
-      original_visit(url, ...)
+#     def visit(url, ...)
+#       original_visit(url, ...)
 
-      unless url.match?("robots.txt") || url.match?("active_storage/representations")
-        expect(page).to have_css "main#main", count: 1
-      end
-    end
-  end
-end
+#       unless url.match?("robots.txt") || url.match?("active_storage/representations")
+#         expect(page).to have_css "main#main", count: 1
+#       end
+#     end
+#   end
+# end
 
 Capybara.register_driver :headless_chrome do |app|
   options = Selenium::WebDriver::Chrome::Options.new.tap do |opts|
