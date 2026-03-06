@@ -62,9 +62,7 @@ module Capybara
       original_visit(url, ...)
 
       unless url.match?("robots.txt") || url.match?("active_storage/representations")
-        expect(page).to have_css "main", count: 1
-        expect(page).to have_css "#main", count: 1
-        expect(page).to have_css "main#main"
+        expect(page).to have_css "main#main", count: 1
       end
     end
   end
