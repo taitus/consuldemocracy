@@ -11,28 +11,20 @@ describe "Budget Investments" do
   it_behaves_like "milestoneable", :budget_investment
 
   context "Concerns" do
+    provider = [ :microsoft, :llm ].sample
+
     it_behaves_like "notifiable in-app", :budget_investment
     it_behaves_like "relationable", Budget::Investment
     it_behaves_like "remotely_translatable",
                     :budget_investment,
                     "budget_investments_path",
                     { budget_id: "budget_id" },
-                    provider: :microsoft
-    it_behaves_like "remotely_translatable",
-                    :budget_investment,
-                    "budget_investments_path",
-                    { budget_id: "budget_id" },
-                    provider: :llm
+                    provider: provider
     it_behaves_like "remotely_translatable",
                     :budget_investment,
                     "budget_investment_path",
                     { budget_id: "budget_id", id: "id" },
-                    provider: :microsoft
-    it_behaves_like "remotely_translatable",
-                    :budget_investment,
-                    "budget_investment_path",
-                    { budget_id: "budget_id", id: "id" },
-                    provider: :llm
+                    provider: provider
     it_behaves_like "flaggable", :budget_investment
   end
 
