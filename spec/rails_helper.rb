@@ -53,20 +53,36 @@ RSpec.configure do |config|
 end
 
 FactoryBot.use_parent_strategy = false
+VISIT_MAIN_ASSERTIONS_TIME = { total: 0.0, count: 0 }
 
-# module Capybara
-#   module DSL
-#     alias_method :original_visit, :visit
+module Capybara
+  module DSL
+    alias_method :original_visit, :visit
 
-#     def visit(url, ...)
-#       original_visit(url, ...)
+    def visit(url, ...)
+      original_visit(url, ...)
 
-#       unless url.match?("robots.txt") || url.match?("active_storage/representations")
-#         expect(page).to have_css "main#main", count: 1
-#       end
-#     end
-#   end
-# end
+      unless url.match?("robots.txt") || url.match?("active_storage/representations")
+        started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+        expect(page).to have_css "main", count: 1
+        expect(page).to have_css "#main", count: 1
+        expect(page).to have_css "main#main", count: 1
+        elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at
+        VISIT_MAIN_ASSERTIONS_TIME[:total] += elapsed
+        VISIT_MAIN_ASSERTIONS_TIME[:count] += 1
+      end
+    end
+  end
+end
+
+RSpec.configure do |config|
+  config.after(:suite) do
+    total = VISIT_MAIN_ASSERTIONS_TIME[:total]
+    count = VISIT_MAIN_ASSERTIONS_TIME[:count]
+
+    puts "\nmain#main assertions: #{count} checks, #{total.round(3)}s total"
+  end
+end
 
 Capybara.register_driver :headless_chrome do |app|
   options = Selenium::WebDriver::Chrome::Options.new.tap do |opts|
