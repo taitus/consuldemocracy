@@ -79,7 +79,7 @@ group :development, :test do
 end
 
 group :test do
-  gem "capybara", "~> 3.40.0"
+  gem "capybara", git: "https://github.com/teamcapybara/capybara.git", branch: "master"
   gem "email_spec", "~> 2.3.1"
   gem "pdf-reader", "~> 2.15.1"
   gem "puffing-billy", "~> 4.0"
